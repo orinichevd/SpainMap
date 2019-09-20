@@ -1,3 +1,6 @@
+//main objects
+var renderer, camera, scene;
+
 const tgeo = new ThreeGeo({
     tokenMapbox: 'pk.eyJ1Ijoib3JpbmljaGV2IiwiYSI6ImNrMHNodzY1ODAybHkzZXFyZ253YmFxZWIifQ.beBMOwb9cT7O_rCMUxjB2Q',                
 });
@@ -8,3 +11,13 @@ var mapController = {
     , r: 50.0 //km
 }
 
+init();
+animate();
+
+function init() {
+
+}
+
+function animate() {
+
+}
