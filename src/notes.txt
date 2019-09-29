@@ -1,0 +1,15 @@
+Map lib https://github.com/w3reality/three-geo
+
+
+
+TODO list:
+MainPlan:
+    DONE: build map from shapes
+    TODO: make customization for map
+    TODO: Remove map mesh
+    TODO: make material
+    TODO: add gpx path
+    TODO: add customization for path
+Code style
+    TODO: Add dependensies through import
+    TODO: More clevere dependency managment - remove not necessary libs for build
