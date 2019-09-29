@@ -18,6 +18,9 @@ var mapController = {
     lat: 41.9802833
     , lon: 2.8011577
     , r: 50.0 //km
+    , zzoom : 1
+    , showMap: false
+    , rebuild: rebuildMap
 }
 
 var mapStyleController = {
@@ -52,22 +55,19 @@ function init() {
     var gridHelper = new THREE.GridHelper(2000, 20000);
     scene.add(gridHelper);
 
-    //gui = new dat.GUI();
-    //add camera frustrum options
-    /*var mapSettings = gui.addFolder('map');
-    mapSettings.add(mapController, 'ShowMap').onChange();
+    gui = new dat.GUI();
+    gui.add(mapController, 'rebuild');
+    var mapSettings = gui.addFolder('map');
+    mapSettings.add(mapController, 'lat').onChange();
+    mapSettings.add(mapController, 'lon').onChange();
+    mapSettings.add(mapController, 'r').onChange();
+    mapSettings.add(mapController, 'zzoom').onChange();
+    mapSettings.add(mapController, 'showMap').onChange();
     var mapShapes = gui.addFolder('shapes');
-    Object.keys(cameraController).forEach(keyName => {
-        cameraSettings.add(cameraController, keyName, -3000, 3000, 5).onChange(applySettings);
-    });
-    Object.keys(cameraPositionController).forEach(keyName => {
-        cameraSettings.add(cameraPositionController, keyName, -3000, 3000, 5).onChange(applySettings);
-    });
-    Object.keys(textController).forEach(keyName => {
-        if (keyName == 'font') return;
-        textSettings.add(textController, keyName, 0, 100, 1).onChange(refreshText);
-    });*/
-
+    mapShapes.addColor(mapStyleController, 'color').onChange();
+    mapShapes.add(mapStyleController, 'r').onChange();
+    mapShapes.add(mapStyleController, 'shape', ['cube', 'circle','hex', 'triangle']).onChange();
+    mapShapes.add(mapStyleController, 'step').onChange();
     rebuildMap();
 }
 
@@ -75,13 +75,13 @@ function rebuildMap() {
     mapShapes.forEach((shape) => {
         if (shape.geometry) shape.geometry.dispose();
         if (shape.texture) shape.texture.dispose();
-        scene.children.remove(shape);
+        scene.remove(shape);
     });
     mapShapes = [];
     mapTextures.forEach((shape) => {
         if (shape.geometry) shape.geometry.dispose();
         if (shape.texture) shape.texture.dispose();
-        scene.children.remove(shape);
+        scene.remove(shape);
     });
     mapTextures = [];
     tgeo.getTerrain([mapController.lat, mapController.lon], mapController.r, 10, {
@@ -89,14 +89,16 @@ function rebuildMap() {
             meshes.forEach((mesh) => {
                 const array = mesh.geometry.attributes.position.array;
                 for (var i = 0; i < array.length; i += 3 * mapStyleController.step) {
-                    var geometry = new THREE.BoxBufferGeometry(mapStyleController.r * 2, mapStyleController.r * 2, array[i + 2]);
+                    if (array[i+2]==0) continue; //remove water
+                    var heightZoomed = array[i+2]*mapController.zzoom;
+                    var geometry = new THREE.BoxBufferGeometry(mapStyleController.r * 2, mapStyleController.r * 2, heightZoomed);
                     var material = new THREE.MeshBasicMaterial({ color: mapStyleController.color });
                     var cube = new THREE.Mesh(geometry, material);
-                    cube.position.set(array[i], array[i + 1], array[i + 2] / 2);
+                    cube.position.set(array[i], array[i + 1], heightZoomed / 2);
                     scene.add(cube);
                     mapShapes.push(cube);
                 }
-                if (mapController.showMAP) {
+                if (mapController.showMap) {
                     scene.add(mesh);
                     mapTextures.push(mesh);
                 };
