@@ -26,8 +26,8 @@ var mapController = {
 var mapStyleController = {
     shape: 'cube'
     , color: 0xFFFFFF
-    , r: 0.001
-    , step: 10
+    , r: 0.005
+    , step: 20
 }
 
 init();
