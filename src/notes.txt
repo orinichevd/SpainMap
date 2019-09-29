@@ -6,7 +6,9 @@ TODO list:
 MainPlan:
     DONE: build map from shapes
     TODO: make customization for map
-    TODO: Remove map mesh
+        TODO: move map creation to separate function
+        TODO: add different shapes
+    DONE: Remove map mesh
     TODO: make material
     TODO: add gpx path
     TODO: add customization for path

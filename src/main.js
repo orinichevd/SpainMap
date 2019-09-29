@@ -47,6 +47,8 @@ function init() {
     var gridHelper = new THREE.GridHelper(2000, 20000);
     scene.add(gridHelper);
 
+    
+
 
 
     tgeo.getTerrain([mapController.lat, mapController.lon], mapController.r, 10, {
