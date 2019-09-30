@@ -9,7 +9,7 @@ MainPlan:
     INP: make customization for map
         DONE: add controls and migrate init functions from valeras fonts
         DONE: move map creation to separate function
-        TODO: add different shapes
+        DONE: add different shapes
     TODO: make material and lights
         TODO: add material controller
         TODO: add lights

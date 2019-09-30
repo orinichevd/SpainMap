@@ -18,7 +18,7 @@ var mapController = {
     lat: 41.9802833
     , lon: 2.8011577
     , r: 50.0 //km
-    , zzoom : 1
+    , zzoom: 1
     , showMap: false
     , rebuild: rebuildMap
 }
@@ -66,7 +66,7 @@ function init() {
     var mapShapes = gui.addFolder('shapes');
     mapShapes.addColor(mapStyleController, 'color').onChange();
     mapShapes.add(mapStyleController, 'r').onChange();
-    mapShapes.add(mapStyleController, 'shape', ['cube', 'circle','hex', 'triangle']).onChange();
+    mapShapes.add(mapStyleController, 'shape', ['cube', 'circle', 'hex', 'triangle']).onChange();
     mapShapes.add(mapStyleController, 'step').onChange();
     rebuildMap();
 }
@@ -89,14 +89,24 @@ function rebuildMap() {
             meshes.forEach((mesh) => {
                 const array = mesh.geometry.attributes.position.array;
                 for (var i = 0; i < array.length; i += 3 * mapStyleController.step) {
-                    if (array[i+2]==0) continue; //remove water
-                    var heightZoomed = array[i+2]*mapController.zzoom;
-                    var geometry = new THREE.BoxBufferGeometry(mapStyleController.r * 2, mapStyleController.r * 2, heightZoomed);
+                    if (array[i + 2] == 0) continue; //remove water
+                    var heightZoomed = array[i + 2] * mapController.zzoom;
+                    var mapElement;
+                    if (mapStyleController.shape == 'cube') {
+                        mapElement = makeCube(array[i], array[i+1], heightZoomed);
+                    } else if (mapStyleController.shape == 'circle') {
+                        mapElement = makeCilinder(array[i], array[i+1], heightZoomed, 32);
+                    } else if (mapStyleController.shape == 'hex') {
+                        mapElement = makeCilinder(array[i], array[i+1], heightZoomed, 6);
+                    } else if (mapStyleController.shape == 'triangle') {
+                        mapElement = makeCilinder(array[i], array[i+1], heightZoomed, 3);
+                    }
+                    /*var geometry = new THREE.BoxBufferGeometry(mapStyleController.r * 2, mapStyleController.r * 2, heightZoomed);
                     var material = new THREE.MeshBasicMaterial({ color: mapStyleController.color });
                     var cube = new THREE.Mesh(geometry, material);
-                    cube.position.set(array[i], array[i + 1], heightZoomed / 2);
-                    scene.add(cube);
-                    mapShapes.push(cube);
+                    cube.position.set(array[i], array[i + 1], heightZoomed / 2);*/
+                    scene.add(mapElement);
+                    mapShapes.push(mapElement);
                 }
                 if (mapController.showMap) {
                     scene.add(mesh);
@@ -105,6 +115,25 @@ function rebuildMap() {
             });
         }
     });
+}
+
+function makeCube(x, y, d) {
+    var cube;
+    var geometry = new THREE.BoxBufferGeometry(mapStyleController.r * 2, mapStyleController.r * 2, d);
+    var material = new THREE.MeshBasicMaterial({ color: mapStyleController.color });
+    cube = new THREE.Mesh(geometry, material);
+    cube.position.set(x, y, d / 2);
+    return cube;
+}
+
+function makeCilinder(x, y, d, edges) {
+    var cylinder;
+    var geometry = new THREE.CylinderGeometry( mapStyleController.r * 2, mapStyleController.r * 2, d, edges );
+    var material = new THREE.MeshBasicMaterial( {color: mapStyleController.color} );
+    cylinder = new THREE.Mesh( geometry, material );
+    cylinder.position.set(x, y, d / 2);
+    cylinder.rotateX(Math.PI/2);
+    return cylinder;
 }
 
 function animate() {
