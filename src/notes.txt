@@ -6,18 +6,20 @@ TODO list:
 MainPlan:
     DONE: build map from shapes
     DONE: Remove map mesh
-    INP: make customization for map
+    DONE: make customization for map
         DONE: add controls and migrate init functions from valeras fonts
         DONE: move map creation to separate function
         DONE: add different shapes
     INP: make material and lights
         TODO: add material controller
-        INP: add lights
-        TODO: add lights Controller
+        DONE: add lights
+        DONE: add lights Controller
+        DONE: add hemisphere light
     TODO: add gpx path
     TODO: add customization for path
     TODO: add different camera
     TODO: remove tile effect
+    TODO: remove triangles
 Code style
     TODO: Add dependensies through import
     TODO: More clevere dependency managment - remove not necessary libs for build

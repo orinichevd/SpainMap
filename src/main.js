@@ -1,12 +1,10 @@
-
 //main objects
 var renderer, camera, scene;
 
-var spotLight1 = createSpotlight(0x6AE2F7, -50, 150, 0, Math.PI / 3);
-var spotLight2 = createSpotlight(0xF90387, -50, -390, 0, -Math.PI / 3);
-var spotLight3 = createSpotlight(0x6AE2F7, 50, 150, 0, Math.PI / 3);
-var spotLight4 = createSpotlight(0xF90387, 50, -390, 0, -Math.PI / 3);
-var light1, light2;
+//lights
+var mainLight;
+var ammbientLight;
+
 
 //support objects
 var controls;
@@ -19,6 +17,23 @@ const tgeo = new ThreeGeo({
 
 //shapes and maps
 var mapShapes = [], mapTextures = [];
+
+var lightController = {
+    color: 0xFFFFFF
+    , x: -2
+    , y: 2
+    , z: 1
+    , xTarget: 0
+    , yTarget: 0
+    , zTarget: 0
+    , intencity: 1.0
+}
+
+var hemiLightController = {
+    skyColor: 0xFFFFFF
+    , terrainColor: 0xFFFFFF
+    , intencity: 0.2
+}
 
 var mapController = {
     lat: 41.9802833
@@ -53,39 +68,27 @@ function init() {
     scene = new THREE.Scene();
 
     //light
-    //scene.add(spotLight1, spotLight2);//, spotLight3, spotLight4);
+    //directLight
+    mainLight = new THREE.DirectionalLight();
+    mainLight.castShadow = true;
+    mainLight.position.set(lightController.x, lightController.y, lightController.z);
+    mainLight.target.position.set(lightController.xTarget,lightController.yTarget,lightController.zTarget);
+    mainLight.color = new THREE.Color(lightController.color);
+    mainLight.intensity = lightController.intencity;
+    scene.add(mainLight.target);
+    scene.add(mainLight);
+   
+    //hemisphere
+    ammbientLight = new THREE.HemisphereLight();
+    scene.add(ammbientLight);
 
-    scene.add(new THREE.AmbientLight(0xFFFFFF, 0.8));
-
-    var light = new THREE.SpotLight(0xffffff, 1, 0, Math.PI / 5, 0.3);
-    light.position.set(-2, 2, 1);
-    light.target.position.set(0, 0, 0);
-    light.castShadow = true;
-    light.shadow.camera.near = 0.1;
-    light.shadow.camera.far = 100;
-    light.shadow.bias = 0.0001;
-    light.shadow.mapSize.width = 1024;
-    light.shadow.mapSize.height = 1024;
-
-    scene.add(light);
-
-    //axes
-    var dir = new THREE.Vector3(1, 2, 0);
+    //helper
+    var directLightHelper = new THREE.DirectionalLightHelper(mainLight);
+    scene.add(directLightHelper);
 
     //normalize the direction vector (convert to vector of length 1)
     var axesHelper = new THREE.AxesHelper(5);
     scene.add(axesHelper);
-    //light helper
-    var spotLightHelper = new THREE.SpotLightHelper(light);
-    scene.add(spotLightHelper);
-
-
-
-
-    light2 = new THREE.DirectionalLight(0xFFFFFF);
-    light2.castShadow = true;
-    light2.position.set(0, -140, 0);
-    //scene.add(light2);
 
     //camera
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -104,33 +107,48 @@ function init() {
     mapSettings.add(mapController, 'r').onChange();
     mapSettings.add(mapController, 'zzoom').onChange();
     mapSettings.add(mapController, 'showMap').onChange();
+
     var mapShapes = gui.addFolder('shapes');
     mapShapes.addColor(mapStyleController, 'color').onChange();
     mapShapes.add(mapStyleController, 'r').onChange();
     mapShapes.add(mapStyleController, 'shape', ['cube', 'circle', 'hex', 'triangle']).onChange();
     mapShapes.add(mapStyleController, 'step').onChange();
 
+    var lightSettings = gui.addFolder('light');
+    lightSettings.addColor(lightController, 'color').onChange(updateLight);
+    lightSettings.add(lightController, 'x', -100, 100).onChange(updateLight);
+    lightSettings.add(lightController, 'y', -100, 100).onChange(updateLight);
+    lightSettings.add(lightController, 'z', -100, 100).onChange(updateLight);
+    lightSettings.add(lightController, 'xTarget', -100, 100).onChange(updateLight);
+    lightSettings.add(lightController, 'yTarget', -100, 100).onChange(updateLight);
+    lightSettings.add(lightController, 'zTarget', -100, 100).onChange(updateLight);
+    lightSettings.add(lightController, 'intencity', 0, 1).onChange(updateLight);
+    var ambientLightSettings = gui.addFolder('ambientLight');
+    ambientLightSettings.addColor(hemiLightController, 'skyColor').onChange(updateLight);
+    ambientLightSettings.addColor(hemiLightController, 'terrainColor').onChange(updateLight);
+    ambientLightSettings.add(hemiLightController, 'intencity', 0, 1).onChange(updateLight);
+
     gui.add(mapController, 'rebuild');
 
-
+    updateLight();
     rebuildMap();
 }
 
-function createSpotlight(color, x, y, z, angle) {
-    var newObj = new THREE.DirectionalLight(color, 2);
-    newObj.castShadow = false;
-    newObj.position.y = y;
-    newObj.angle = angle;
-    newObj.penumbra = 0;
-    newObj.intencity = 2;
-    newObj.decay = 2;
-    newObj.distance = 500;
-    newObj.shadow.mapSize.width = 1024;
-    newObj.shadow.mapSize.height = 1024;
-    return newObj;
+function updateLight() {
+    //main lights   
+    mainLight.position.set(lightController.x, lightController.y, lightController.z);
+    mainLight.target.position.set(lightController.xTarget,lightController.yTarget,lightController.zTarget);
+    mainLight.color = new THREE.Color(lightController.color);
+    mainLight.intensity = lightController.intencity;
+    //ambient
+    ammbientLight.color =  new THREE.Color(hemiLightController.skyColor);
+    ammbientLight.groundColor = new THREE.Color(hemiLightController.terrainColor);
+    ammbientLight.intencity = hemiLightController.intencity;
+
 }
 
 function rebuildMap() {
+    //remove old
     mapShapes.forEach((shape) => {
         if (shape.geometry) shape.geometry.dispose();
         if (shape.texture) shape.texture.dispose();
