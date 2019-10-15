@@ -12,6 +12,7 @@ var controls;
 //map
 const tgeo = new ThreeGeo({
     tokenMapbox: 'pk.eyJ1Ijoib3JpbmljaGV2IiwiYSI6ImNrMHNqMDY2bjAyd28zb3FybnE5dDR1YWkifQ.32WNu1dwAHa5zn2bq2qRMQ',
+    unitsSide: 5
 });
 
 
@@ -20,8 +21,8 @@ var mapShapes = [], mapTextures = [];
 
 var lightController = {
     color: 0xFFFFFF
-    , x: -2
-    , y: 2
+    , x: -6.5
+    , y: 5
     , z: 1
     , xTarget: 0
     , yTarget: 0
@@ -31,7 +32,7 @@ var lightController = {
 
 var hemiLightController = {
     skyColor: 0xFFFFFF
-    , terrainColor: 0xFFFFFF
+    , terrainColor: 0xc7e3fc
     , intencity: 0.2
 }
 
@@ -39,9 +40,11 @@ var mapController = {
     lat: 41.9802833
     , lon: 2.8011577
     , r: 50.0 //km
+    , zoom: 11
     , zzoom: 10
     , showMap: false
-    , rebuild: rebuildMap
+    , rebuild: updateMap
+    , mode: 'contour'
 }
 
 var mapStyleController = {
@@ -71,13 +74,20 @@ function init() {
     //directLight
     mainLight = new THREE.DirectionalLight();
     mainLight.castShadow = true;
+    mainLight.shadow.camera.near = 0.5;
+    mainLight.shadow.camera.far = 100;
+    mainLight.shadow.mapSize.width = 2000;
+    mainLight.shadow.mapSize.height = 2000;
     mainLight.position.set(lightController.x, lightController.y, lightController.z);
-    mainLight.target.position.set(lightController.xTarget,lightController.yTarget,lightController.zTarget);
+    mainLight.target.position.set(lightController.xTarget, lightController.yTarget, lightController.zTarget);
     mainLight.color = new THREE.Color(lightController.color);
     mainLight.intensity = lightController.intencity;
     scene.add(mainLight.target);
     scene.add(mainLight);
-   
+
+    var shadowHelper = new THREE.CameraHelper(mainLight.shadow.camera);
+    scene.add(shadowHelper);
+
     //hemisphere
     ammbientLight = new THREE.HemisphereLight();
     scene.add(ammbientLight);
@@ -97,15 +107,14 @@ function init() {
 
     //controls and helpers
     controls = new THREE.OrbitControls(camera, renderer.domElement);
-    var gridHelper = new THREE.GridHelper(2000, 20000);
-    scene.add(gridHelper);
 
-    gui = new dat.GUI();    
+    gui = new dat.GUI();
     var mapSettings = gui.addFolder('map');
     mapSettings.add(mapController, 'lat').onChange();
     mapSettings.add(mapController, 'lon').onChange();
     mapSettings.add(mapController, 'r').onChange();
     mapSettings.add(mapController, 'zzoom').onChange();
+    mapSettings.add(mapController, 'zoom').onChange();
     mapSettings.add(mapController, 'showMap').onChange();
 
     var mapShapes = gui.addFolder('shapes');
@@ -128,26 +137,28 @@ function init() {
     ambientLightSettings.addColor(hemiLightController, 'terrainColor').onChange(updateLight);
     ambientLightSettings.add(hemiLightController, 'intencity', 0, 1).onChange(updateLight);
 
+    gui.add(mapController, 'mode', ['contour', 'shapes', 'meshes']).onChange(updateMap);
     gui.add(mapController, 'rebuild');
-
     updateLight();
-    rebuildMap();
+    updateMap();
+
 }
 
 function updateLight() {
     //main lights   
     mainLight.position.set(lightController.x, lightController.y, lightController.z);
-    mainLight.target.position.set(lightController.xTarget,lightController.yTarget,lightController.zTarget);
+    mainLight.target.position.set(lightController.xTarget, lightController.yTarget, lightController.zTarget);
     mainLight.color = new THREE.Color(lightController.color);
     mainLight.intensity = lightController.intencity;
     //ambient
-    ammbientLight.color =  new THREE.Color(hemiLightController.skyColor);
+    ammbientLight.color = new THREE.Color(hemiLightController.skyColor);
     ammbientLight.groundColor = new THREE.Color(hemiLightController.terrainColor);
     ammbientLight.intencity = hemiLightController.intencity;
 
 }
 
-function rebuildMap() {
+function updateMap() {
+    console.log('update map start');
     //remove old
     mapShapes.forEach((shape) => {
         if (shape.geometry) shape.geometry.dispose();
@@ -161,6 +172,21 @@ function rebuildMap() {
         scene.remove(shape);
     });
     mapTextures = [];
+    console.log(mapController.mode);
+    switch (mapController.mode) {
+        case 'contour':
+            rebuildLayerMap();
+            break;
+        case 'shapes':
+            rebuildMap();
+            break;
+        case 'meshed':
+            rebuildMeshedMap();
+            break;
+    }
+}
+
+function rebuildMap() {
     tgeo.getTerrain([mapController.lat, mapController.lon], mapController.r, 10, {
         onRgbDem: (meshes) => { // your implementation when terrain's geometry is obtained
             meshes.forEach((mesh) => {
@@ -178,6 +204,10 @@ function rebuildMap() {
                     } else if (mapStyleController.shape == 'triangle') {
                         mapElement = makeCilinder(array[i], array[i + 1], heightZoomed, 3);
                     }
+                    if (mapStyleController.step<=10) {
+                        mapElement.castShadow = false;
+                        mapElement.receiveShadow = false;
+                    }
                     scene.add(mapElement);
                     mapShapes.push(mapElement);
                 }
@@ -189,6 +219,55 @@ function rebuildMap() {
         }
     });
 }
+
+function rebuildLayerMap() {
+    tgeo.getTerrain([mapController.lat, mapController.lon], mapController.r, 12, {
+        onVectorDem: (objs) => { // your implementation when terrain's geometry is obtained
+            console.log(objs);
+            objs.forEach((obj) => {
+                if (obj.name.includes('shade')) {
+                    obj.material = new THREE.MeshPhongMaterial({ color: mapStyleController.color });;
+                    obj.castShadow = true;
+                    obj.receiveShadow = true;
+                    scene.add(obj);
+                    mapShapes.push(obj);
+                }
+                console.log('done');
+
+            })
+        }
+    });
+}
+
+//other algoritm implementation
+function rebuildMeshedMap() {
+    tgeo.getTerrain([mapController.lat, mapController.lon], mapController.r, 10, {
+        onRgbDem: (meshes) => { // your implementation when terrain's geometry is obtained
+            meshes.forEach((mesh) => {
+                var material = new THREE.MeshPhongMaterial({ color: mapStyleController.color });
+                var geometry = mesh.geometry;
+                scene.add(new THREE.Mesh(geometry, material));
+                if (mapController.showMap) {
+                    scene.add(mesh);
+                    mapTextures.push(mesh);
+                };
+            });
+        }
+    });
+}
+
+const createPanelSprite = (can, pixelsPerUnit = 512) => {
+    const mat = new THREE.SpriteMaterial({
+        map: new THREE.Texture(can),
+        opacity: 0.7,
+        color: 0xffffff,
+    });
+    mat.map.needsUpdate = true;
+    const sp = new THREE.Sprite(mat);
+    sp.scale.set(
+        can.width / pixelsPerUnit, can.height / pixelsPerUnit, 1.0);
+    return sp;
+};
 
 function makeCube(x, y, d) {
     var cube;
@@ -215,7 +294,6 @@ function makeCilinder(x, y, d, edges) {
 
 function animate() {
     requestAnimationFrame(animate);
-
     renderer.render(scene, camera);
 }
 

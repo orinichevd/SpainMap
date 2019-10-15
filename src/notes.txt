@@ -10,11 +10,12 @@ MainPlan:
         DONE: add controls and migrate init functions from valeras fonts
         DONE: move map creation to separate function
         DONE: add different shapes
-    INP: make material and lights
-        TODO: add material controller
+    DONE: make material and lights
+        WF: add material controller - unnecessery
         DONE: add lights
         DONE: add lights Controller
         DONE: add hemisphere light
+    TODO: add background
     TODO: add gpx path
     TODO: add customization for path
     TODO: add different camera
@@ -24,5 +25,5 @@ Code style
     TODO: Add dependensies through import
     TODO: More clevere dependency managment - remove not necessary libs for build
 IDEAS
-    TODO: do ground style like this https://beinternetawesome.withgoogle.com/en_us/interland
+    INP: do ground style like this https://beinternetawesome.withgoogle.com/en_us/interland
     TODO: add some geographic objects towns, roads, rivers
