@@ -16,7 +16,7 @@ MainPlan:
         DONE: add lights Controller
         DONE: add hemisphere light
     TODO: add background
-    TODO: add gpx path
+    INP: add gpx path
     TODO: add customization for path
     TODO: add different camera
     TODO: remove tile effect
@@ -27,3 +27,4 @@ Code style
 IDEAS
     INP: do ground style like this https://beinternetawesome.withgoogle.com/en_us/interland
     TODO: add some geographic objects towns, roads, rivers
+    TODO: add some settings for renderer from here https://threejs.org/docs/#api/en/constants/Renderer

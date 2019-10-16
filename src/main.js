@@ -54,8 +54,9 @@ var mapStyleController = {
     , step: 60
 }
 
-init();
-animate();
+loadGpx();
+//init();
+//animate();
 
 function init() {
     // Renderer
@@ -69,6 +70,9 @@ function init() {
     // Scene
 
     scene = new THREE.Scene();
+
+    //load gpx
+    loadGpx();
 
     //light
     //directLight
@@ -141,6 +145,16 @@ function init() {
     gui.add(mapController, 'rebuild');
     updateLight();
     updateMap();
+
+}
+
+function loadGpx() {
+    console.log('start loading gpx');
+    d3.xml('test.xml', 'application/xml', gpxParser);
+}
+
+function gpxParser(gpx) {
+    console.log(gpx);
 
 }
 
