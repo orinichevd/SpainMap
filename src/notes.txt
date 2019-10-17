@@ -17,14 +17,19 @@ MainPlan:
         DONE: add hemisphere light
     TODO: add background
     INP: add gpx path
-    TODO: add customization for path
+        DONE: read path from file
+        TODO: add customization for path
+            TODO: particle sitem https://codepen.io/zadvorsky/pen/qOYqGv
+            TODO: add path controller
     TODO: add different camera
-    TODO: remove tile effect
-    TODO: remove triangles
+    TODO: add water effect
+    TODO: add colors
+    DONE: remove tile effect
+    DONE: remove triangles
 Code style
     TODO: Add dependensies through import
-    TODO: More clevere dependency managment - remove not necessary libs for build
+    TODO: More clever dependency managment - remove not necessary libs for build
 IDEAS
-    INP: do ground style like this https://beinternetawesome.withgoogle.com/en_us/interland
+    TODO: do ground style like this https://beinternetawesome.withgoogle.com/en_us/interland
     TODO: add some geographic objects towns, roads, rivers
     TODO: add some settings for renderer from here https://threejs.org/docs/#api/en/constants/Renderer

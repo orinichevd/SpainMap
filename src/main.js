@@ -54,9 +54,8 @@ var mapStyleController = {
     , step: 60
 }
 
-loadGpx();
-//init();
-//animate();
+init();
+animate();
 
 function init() {
     // Renderer
@@ -72,7 +71,8 @@ function init() {
     scene = new THREE.Scene();
 
     //load gpx
-    loadGpx();
+    loadGpx('assets/path1.gpx');
+    loadGpx('assets/path2.gpx');
 
     //light
     //directLight
@@ -148,73 +148,48 @@ function init() {
 
 }
 
-function loadGpx() {
+function loadGpx(filePath) {
     console.log('start loading gpx');
+    var {proj, unitsPerMeter} = tgeo.getProjection([mapController.lat, mapController.lon], mapController.r)
     var request = new XMLHttpRequest();
-    request.open("GET", "assets/path1.gpx", true);
+    request.open("GET", filePath, true);
     request.onreadystatechange = function () {
         if (request.readyState == 4) {
             if (request.status == 200 || request.status == 0) {
                 console.log('done');
-                var gpxFile = request.response;
                 var oParser = new DOMParser();
-                var gpx = oParser.parseFromString(gpxFile, "application/xml");
+                var gpx = oParser.parseFromString(request.response, "application/xml");
                 var tracks = gpx.getElementsByTagName('trk');
                 var geometry = new THREE.Geometry();
                 console.log(tracks);
-
                 for (i = 0; i < tracks.length; i++) {
                     var points = tracks[i].getElementsByTagName('trkpt');
                     console.log(points);
 
-                    for (x = 0; x < points.length; x++) {
-                        var point = points[x],
+                    for (j = 0; j < points.length; j++) {
+                        var point = points[j],
                             ele = parseInt(point.getElementsByTagName('ele')[0].firstChild.nodeValue),
                             lat = parseFloat(point.getAttribute('lat')),
                             lng = parseFloat(point.getAttribute('lon'));
-                        //coord = translate(projection([lng, lat]));
+                        var [x,y,z] = [...proj([lng, lat]), ele*unitsPerMeter];
 
-                        //geometry.vertices.push(new THREE.Vector3(coord[0], coord[1], (ele / 2470 * heightFactor) + (0.01 * heightFactor)));
+                        geometry.vertices.push(new THREE.Vector3(x, y, z));
                     }
                 }
+                var material = new THREE.LineBasicMaterial({
+                    color: 0xff0000,
+                    linewidth: 200
+                });
+            
+                var line = new THREE.Line(geometry, material);
+                line.castShadow = true;
+                scene.add(line);
 
             }
         }
     }
     request.send();
 }
-
-function gpxParser(gpx) {
-    var tracks = gpx.getElementsByTagName('trk'),
-        geometry = new THREE.Geometry();
-
-    for (i = 0; i < tracks.length; i++) {
-        var points = tracks[i].getElementsByTagName('trkpt')
-
-        for (x = 0; x < points.length; x++) {
-            var point = points[x],
-                ele = parseInt(point.getElementsByTagName('ele')[0].firstChild.nodeValue),
-                lat = parseFloat(point.getAttribute('lat')),
-                lng = parseFloat(point.getAttribute('lon')),
-                coord = translate(projection([lng, lat]));
-
-            geometry.vertices.push(new THREE.Vector3(coord[0], coord[1], (ele / 2470 * heightFactor) + (0.01 * heightFactor)));
-        }
-    }
-
-    var material = new THREE.LineBasicMaterial({
-        color: 0xffffff,
-        linewidth: 2
-    });
-
-    var line = new THREE.Line(geometry, material);
-    scene.add(line);
-}
-
-function translate(point) {
-    return [point[0] - (terrainSize / 2), (terrainSize / 2) - point[1]];
-}
-
 
 function updateLight() {
     //main lights   
