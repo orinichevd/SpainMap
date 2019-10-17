@@ -1,3 +1,5 @@
+const gpxFiles = ['assets/path1.gpx', 'assets/path2.gpx'];
+
 //main objects
 var renderer, camera, scene;
 
@@ -50,6 +52,7 @@ var mapController = {
 var mapStyleController = {
     shape: 'cube'
     , color: 0xFFFFFF
+    , waterColor: 0x21adfa
     , r: 0.008
     , step: 60
 }
@@ -71,8 +74,7 @@ function init() {
     scene = new THREE.Scene();
 
     //load gpx
-    loadGpx('assets/path1.gpx');
-    loadGpx('assets/path2.gpx');
+    gpxFiles.forEach(fileName => { loadGpx(fileName) });
 
     //light
     //directLight
@@ -123,6 +125,7 @@ function init() {
 
     var mapShapes = gui.addFolder('shapes');
     mapShapes.addColor(mapStyleController, 'color').onChange();
+    mapShapes.addColor(mapStyleController, 'waterColor').onChange();
     mapShapes.add(mapStyleController, 'r').onChange();
     mapShapes.add(mapStyleController, 'shape', ['cube', 'circle', 'hex', 'triangle']).onChange();
     mapShapes.add(mapStyleController, 'step').onChange();
@@ -150,7 +153,7 @@ function init() {
 
 function loadGpx(filePath) {
     console.log('start loading gpx');
-    var {proj, unitsPerMeter} = tgeo.getProjection([mapController.lat, mapController.lon], mapController.r)
+    var { proj, unitsPerMeter } = tgeo.getProjection([mapController.lat, mapController.lon], mapController.r)
     var request = new XMLHttpRequest();
     request.open("GET", filePath, true);
     request.onreadystatechange = function () {
@@ -161,17 +164,15 @@ function loadGpx(filePath) {
                 var gpx = oParser.parseFromString(request.response, "application/xml");
                 var tracks = gpx.getElementsByTagName('trk');
                 var geometry = new THREE.Geometry();
-                console.log(tracks);
                 for (i = 0; i < tracks.length; i++) {
                     var points = tracks[i].getElementsByTagName('trkpt');
-                    console.log(points);
 
                     for (j = 0; j < points.length; j++) {
                         var point = points[j],
                             ele = parseInt(point.getElementsByTagName('ele')[0].firstChild.nodeValue),
                             lat = parseFloat(point.getAttribute('lat')),
                             lng = parseFloat(point.getAttribute('lon'));
-                        var [x,y,z] = [...proj([lng, lat]), ele*unitsPerMeter];
+                        var [x, y, z] = [...proj([lng, lat]), ele * unitsPerMeter];
 
                         geometry.vertices.push(new THREE.Vector3(x, y, z));
                     }
@@ -180,7 +181,7 @@ function loadGpx(filePath) {
                     color: 0xff0000,
                     linewidth: 200
                 });
-            
+
                 var line = new THREE.Line(geometry, material);
                 line.castShadow = true;
                 scene.add(line);
@@ -269,15 +270,18 @@ function rebuildMap() {
 
 function rebuildLayerMap() {
     tgeo.getTerrain([mapController.lat, mapController.lon], mapController.r, 12, {
-        onVectorDem: (objs) => { // your implementation when terrain's geometry is obtained
+        onVectorDem: (objs) => {
             console.log(objs);
             objs.forEach((obj) => {
                 if (obj.name.includes('shade')) {
-                    obj.material = new THREE.MeshPhongMaterial({ color: mapStyleController.color });;
+                    obj.material = new THREE.MeshPhongMaterial({ color: mapStyleController.color });
+                    if (obj.position.z < 0) { obj.material = new THREE.MeshPhongMaterial({ color: mapStyleController.waterColor }); }
                     obj.castShadow = true;
                     obj.receiveShadow = true;
-                    scene.add(obj);
-                    mapShapes.push(obj);
+
+                        scene.add(obj);
+                        mapShapes.push(obj);
+                    
                 }
                 console.log('done');
 
