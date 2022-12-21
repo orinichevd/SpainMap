@@ -1,10 +1,8 @@
-/**
- * @author mrdoob / http://mrdoob.com/
- */
-
 function WebGLBufferRenderer( gl, extensions, info, capabilities ) {
 
-	var mode;
+	const isWebGL2 = capabilities.isWebGL2;
+
+	let mode;
 
 	function setMode( value ) {
 
@@ -16,15 +14,17 @@ function WebGLBufferRenderer( gl, extensions, info, capabilities ) {
 
 		gl.drawArrays( mode, start, count );
 
-		info.update( count, mode );
+		info.update( count, mode, 1 );
 
 	}
 
-	function renderInstances( geometry, start, count ) {
+	function renderInstances( start, count, primcount ) {
 
-		var extension, methodName;
+		if ( primcount === 0 ) return;
 
-		if ( capabilities.isWebGL2 ) {
+		let extension, methodName;
+
+		if ( isWebGL2 ) {
 
 			extension = gl;
 			methodName = 'drawArraysInstanced';
@@ -43,9 +43,9 @@ function WebGLBufferRenderer( gl, extensions, info, capabilities ) {
 
 		}
 
-		extension[ methodName ]( mode, start, count, geometry.maxInstancedCount );
+		extension[ methodName ]( mode, start, count, primcount );
 
-		info.update( count, mode, geometry.maxInstancedCount );
+		info.update( count, mode, primcount );
 
 	}
 

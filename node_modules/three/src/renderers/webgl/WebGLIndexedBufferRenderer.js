@@ -1,10 +1,8 @@
-/**
- * @author mrdoob / http://mrdoob.com/
- */
-
 function WebGLIndexedBufferRenderer( gl, extensions, info, capabilities ) {
 
-	var mode;
+	const isWebGL2 = capabilities.isWebGL2;
+
+	let mode;
 
 	function setMode( value ) {
 
@@ -12,7 +10,7 @@ function WebGLIndexedBufferRenderer( gl, extensions, info, capabilities ) {
 
 	}
 
-	var type, bytesPerElement;
+	let type, bytesPerElement;
 
 	function setIndex( value ) {
 
@@ -25,15 +23,17 @@ function WebGLIndexedBufferRenderer( gl, extensions, info, capabilities ) {
 
 		gl.drawElements( mode, count, type, start * bytesPerElement );
 
-		info.update( count, mode );
+		info.update( count, mode, 1 );
 
 	}
 
-	function renderInstances( geometry, start, count ) {
+	function renderInstances( start, count, primcount ) {
 
-		var extension, methodName;
+		if ( primcount === 0 ) return;
 
-		if ( capabilities.isWebGL2 ) {
+		let extension, methodName;
+
+		if ( isWebGL2 ) {
 
 			extension = gl;
 			methodName = 'drawElementsInstanced';
@@ -52,9 +52,9 @@ function WebGLIndexedBufferRenderer( gl, extensions, info, capabilities ) {
 
 		}
 
-		extension[ methodName ]( mode, count, type, start * bytesPerElement, geometry.maxInstancedCount );
+		extension[ methodName ]( mode, count, type, start * bytesPerElement, primcount );
 
-		info.update( count, mode, geometry.maxInstancedCount );
+		info.update( count, mode, primcount );
 
 	}
 

@@ -6,7 +6,7 @@ var EOL = {},
 
 function objectConverter(columns) {
   return new Function("d", "return {" + columns.map(function(name, i) {
-    return JSON.stringify(name) + ": d[" + i + "]";
+    return JSON.stringify(name) + ": d[" + i + "] || \"\"";
   }).join(",") + "}");
 }
 
@@ -157,6 +157,8 @@ export default function(delimiter) {
     parseRows: parseRows,
     format: format,
     formatBody: formatBody,
-    formatRows: formatRows
+    formatRows: formatRows,
+    formatRow: formatRow,
+    formatValue: formatValue
   };
 }

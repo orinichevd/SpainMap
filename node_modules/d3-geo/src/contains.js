@@ -1,6 +1,6 @@
-import {default as polygonContains} from "./polygonContains";
-import {default as distance} from "./distance";
-import {epsilon2, radians} from "./math";
+import {default as polygonContains} from "./polygonContains.js";
+import {default as distance} from "./distance.js";
+import {epsilon2, radians} from "./math.js";
 
 var containsObjectType = {
   Feature: function(object, point) {
